@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -40,7 +40,7 @@ def click_us_link(driver, url, website):
     try:
         driver.get(url)
         
-        if website == "Best_Buy":
+        if website == "BestBuy":
             condition = EC.element_to_be_clickable((By.XPATH, "//a[@class='us-link']/h4[text()='United States']"))
         elif website == "Newegg":
             condition = EC.visibility_of_element_located((By.CSS_SELECTOR, 'button.button.button-m.bg-white'))
@@ -56,14 +56,14 @@ def click_us_link(driver, url, website):
 def search_bestbuy(driver, product_name):
     url = f'https://www.bestbuy.com/site/searchpage.jsp?st={product_name}'
     driver.get(url)
-    click_us_link(driver,url,"Best_Buy")
+    click_us_link(driver,url,"BestBuy")
     
     try:
         product = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, '.sku-title a .nc-product-title'))
+            EC.visibility_of_element_located((By.CSS_SELECTOR, '.sku-title a'))
         ).text
         price = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, '.priceView-hero-price priceView-customer-price span[aria-hidden="true"]'))
+            EC.visibility_of_element_located((By.CSS_SELECTOR, '.pricing-price  div[data-testid="large-price"] .priceView-customer-price > span:nth-child(1)'))
         ).text
         return ('Bestbuy', product, price)
     except:
