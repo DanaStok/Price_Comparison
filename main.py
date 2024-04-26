@@ -65,9 +65,18 @@ def click_us_link(driver, url, website):
         
 
 def clean_price(price_str):
-    # This regular expression removes any characters that are not digits, period, or comma
-    clean_price = re.sub(r'[^\d.,]', '', price_str)
-    return clean_price
+    # Remove any non-digit, period, or comma characters
+    cleaned_price = re.sub(r'[^\d.,]', '', price_str)
+
+    # Replace commas with empty strings to remove the thousands separator
+    cleaned_price = cleaned_price.replace(',', '')
+
+    if '.' in cleaned_price:
+        # If it contains a period, return the price as a float
+        return float(cleaned_price)
+    else:
+        # If it doesn't contain a period, assume the price is in cents and divide by 100
+        return float(cleaned_price) / 100
     
 def search_bestbuy(driver, product_name):
     url = f'https://www.bestbuy.com/site/searchpage.jsp?st={product_name}'
@@ -81,9 +90,11 @@ def search_bestbuy(driver, product_name):
         product = product_element.text
         product_url = product_element.get_attribute('href')
         print(f"BestBuy URL: {product_url}")
+        print(f"BestBuy product: {product}")
         price = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, '.pricing-price  div[data-testid="large-price"] .priceView-customer-price > span:nth-child(1)'))
         ).text
+        print(f"Bestbuy Price: {price}")
         return ('Bestbuy', product, clean_price(price), product_url)
     except:
         return ('Bestbuy', None, None, None)
@@ -102,6 +113,8 @@ def search_walmart(driver, product_name):
         price = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-automation-id="product-price"] div[aria-hidden="true"]'))
         ).text
+        print(f"Walmart Price: {price}")
+        print(f"Walmart product: {product}")
         return ('Walmart', product, clean_price(price), product_url)
     except:
         return ('Walmart', None, None, None)
@@ -118,9 +131,11 @@ def search_newegg(driver, product_name):
         product = product_element.text
         product_url = product_element.get_attribute('href')
         print(f"Newegg URL: {product_url}")
+        print(f"Newegg product: {product}")
         price = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, '.price-current'))
         ).text
+        print(f"NewEgg Price: {price}")
         return ('Newegg', product, clean_price(price), product_url)
     except:
         return ('Newegg', None, None, None)
