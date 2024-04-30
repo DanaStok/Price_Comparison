@@ -1,18 +1,14 @@
 'use client';
 import React, { useState, FormEvent } from 'react';
 import "./layout.css";
+import "./types.ts"
+import "./title.css"
 
-interface SearchResult {
-  company: string;
-  productName: string;
-  price: string;
-  url: string;
-}
 function Search() {
   const [productName, setProductName] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]); // State to SearchResult items
   const [isLoading, setIsLoading] = useState(false);
-  const [cart, setCart] = useState<SearchResult[]>([]); // State to store cart items
+  const [cart, setCart] = useState<SearchResult[]>([]); // State to SearchResult items
   const [total, setTotal] = useState(0); // State to store total price
 
   const handleSearch = async (e: FormEvent) => {
@@ -27,7 +23,6 @@ function Search() {
         { company: 'Newegg', productName: data.Newegg?.Item ?? '', price: data.Newegg?.Price?.toString() ?? '', url: data.Newegg?.URL ?? '' },
         { company: 'Walmart', productName: data.Walmart?.Item ?? '', price: data.Walmart?.Price?.toString() ?? '', url: data.Walmart?.URL ?? '' }
       ];
-      console.log(results);
       setSearchResults(results);
     } catch (error) {
       console.error('There was an error!', error);
@@ -52,6 +47,7 @@ function Search() {
 
   return (
     <div>
+      <h1 className="title">Price Comparator</h1> 
       <form onSubmit={handleSearch}>
         <input
           type="text"
@@ -82,7 +78,7 @@ function Search() {
             </thead>
             <tbody>
               {searchResults.map((result, index) => (
-                <tr key={index}>
+                <tr className="hover" key={index}>
                   <td>{result.company}</td>
                   <td>
                     <a href={result.url} target="_blank" rel="noopener noreferrer" className="link link-hover">

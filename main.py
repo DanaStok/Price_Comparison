@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -6,27 +7,43 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from fastapi.middleware.cors import CORSMiddleware
-import re
+import re, random, time
+from fake_useragent import UserAgent
 
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Allows all origins for the Next.js server
+    allow_origins=["http://localhost:3000"],  
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"], 
+    allow_headers=["*"],  
 )
 
 def setup_driver():
-    # Path to the ChromeDriverpip install fastapi uvicorn
-
-    PATH = "./chromedriver"  # Update this path
+    PATH = "./chromedriver"
     service = Service(executable_path=PATH)
     options = Options()
     options.headless = True
+
+    # Add options to simulate human-like behavior
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option("useAutomationExtension", False)
+
     driver = webdriver.Chrome(service=service, options=options)
+
+    # Additional options to simulate human-like behavior
+    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+        "source": """
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            })
+        """
+    })
+
     return driver
 
 @app.get("/search/{product_name}")
@@ -35,16 +52,16 @@ async def search_all_sites(product_name: str):
     try:
         results = [
             search_bestbuy(driver, product_name),
-            search_walmart(driver, product_name),
-            search_newegg(driver, product_name)
+            search_newegg(driver, product_name),
+            search_walmart(driver, product_name)
         ]
     finally:
         driver.quit()
     
     return {
         "BestBuy": {"Item": results[0][1], "Price": results[0][2], "URL": results[0][3]},
-        "Walmart": {"Item": results[1][1], "Price": results[1][2], "URL": results[1][3]},
-        "Newegg": {"Item": results[2][1], "Price": results[2][2], "URL": results[2][3]}
+        "Newegg": {"Item": results[1][1], "Price": results[1][2], "URL": results[1][3]},
+        "Walmart": {"Item": results[2][1], "Price": results[2][2], "URL": results[2][3]}
     }
     
 def click_us_link(driver, url, website):
@@ -89,19 +106,28 @@ def search_bestbuy(driver, product_name):
         )
         product = product_element.text
         product_url = product_element.get_attribute('href')
-        print(f"BestBuy URL: {product_url}")
-        print(f"BestBuy product: {product}")
         price = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, '.pricing-price  div[data-testid="large-price"] .priceView-customer-price > span:nth-child(1)'))
         ).text
+        print(f"BestBuy URL: {product_url}")
+        print(f"BestBuy product: {product}")
         print(f"Bestbuy Price: {price}")
         return ('Bestbuy', product, clean_price(price), product_url)
     except:
         return ('Bestbuy', None, None, None)
 
 def search_walmart(driver, product_name):
+    ua = UserAgent()
+    user_agent = ua.random  # Randomize the User-Agent
+
+    driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": user_agent})  # Set the new User-Agent
+    
     url = f'https://www.walmart.com/search/?query={product_name}'
     driver.get(url)
+    
+    delay = random.uniform(2, 5)  # Random delay between 2 and 5 seconds
+    time.sleep(delay)
+    
     try:
         product= WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, 'span[data-automation-id="product-title"]'))
@@ -109,10 +135,10 @@ def search_walmart(driver, product_name):
         product_url = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, 'a.absolute.w-100.h-100.z-1.hide-sibling-opacity'))
         ).get_attribute('href')
-        print(f"Walmart URL: {product_url}")
         price = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-automation-id="product-price"] div[aria-hidden="true"]'))
         ).text
+        print(f"Walmart URL: {product_url}")
         print(f"Walmart Price: {price}")
         print(f"Walmart product: {product}")
         return ('Walmart', product, clean_price(price), product_url)
@@ -120,8 +146,11 @@ def search_walmart(driver, product_name):
         return ('Walmart', None, None, None)
 
 def search_newegg(driver, product_name):
+
     url = f'https://www.newegg.com/p/pl?d={product_name}'
     driver.get(url)
+    
+    
     click_us_link(driver,url,"Newegg")
     
     try:
@@ -130,11 +159,11 @@ def search_newegg(driver, product_name):
         )
         product = product_element.text
         product_url = product_element.get_attribute('href')
-        print(f"Newegg URL: {product_url}")
-        print(f"Newegg product: {product}")
         price = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, '.price-current'))
         ).text
+        print(f"Newegg URL: {product_url}")
+        print(f"Newegg product: {product}")
         print(f"NewEgg Price: {price}")
         return ('Newegg', product, clean_price(price), product_url)
     except:

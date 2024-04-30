@@ -31,6 +31,10 @@
     text-align: center; /* Centers text horizontally */
     vertical-align: middle; /* Centers text vertically */
   }
+  .table td {
+    text-align: center; /* Centers text horizontally */
+    vertical-align: middle; /* Centers text vertically */
+  }
   .table-container {
     position: relative;
     top: 50px; /* Adjust the value as needed */

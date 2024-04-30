@@ -1,0 +1,39 @@
+/* Import the Montserrat font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+.title {
+  font-family: 'Montserrat', sans-serif; /* Set the font family */
+  font-weight: 700; /* Use the bold weight */
+  font-size: 3rem; /* Initial font size */
+  transition: font-size 0.3s; /* Add smooth transition effect */
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: flex-start; /* Align items at the top */
+  padding-top: 20px; /* Add some space from the top */
+  padding-bottom: 40px; /* Add some space from the bottom */
+
+  /* Animation properties */
+  animation: colorCycle 10s infinite; /* Apply the color cycling animation */
+}
+
+/* Define the color cycling animation */
+@keyframes colorCycle {
+  0% {
+    color: #ffd6d6; /* Light pink */
+  }
+  20% {
+    color: #ffe6d6; /* Light orange */
+  }
+  40% {
+    color: #ffffd6; /* Light yellow */
+  }
+  60% {
+    color: #e6ffd6; /* Light green */
+  }
+  80% {
+    color: #d6e6ff; /* Light blue */
+  }
+  100% {
+    color: #ffd6ff; /* Light purple */
+  }
+}
