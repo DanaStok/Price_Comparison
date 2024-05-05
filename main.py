@@ -15,7 +15,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],  
     allow_credentials=True,
     allow_methods=["*"], 
     allow_headers=["*"],  
@@ -26,13 +26,13 @@ def setup_driver():
     service = Service(executable_path=PATH)
     options = Options()
     options.headless = True
-
+    
     # Add options to simulate human-like behavior
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
-
-    driver = webdriver.Chrome(service=service, options=options)
+    
+    driver = webdriver.Chrome(service=service, options=options) 
 
     # Additional options to simulate human-like behavior
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
@@ -79,8 +79,7 @@ def click_us_link(driver, url, website):
         print("Clicked on the United States link successfully!")
     except Exception as e:
         print(f"The United States link was not clickable or not found within the timeout period: {str(e)}")
-        
-
+ 
 def clean_price(price_str):
     # Remove any non-digit, period, or comma characters
     cleaned_price = re.sub(r'[^\d.,]', '', price_str)
@@ -116,11 +115,12 @@ def search_bestbuy(driver, product_name):
     except:
         return ('Bestbuy', None, None, None)
 
-def search_walmart(driver, product_name):
+def search_walmart(driver, product_name):   
+    
     ua = UserAgent()
     user_agent = ua.random  # Randomize the User-Agent
-
-    driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": user_agent})  # Set the new User-Agent
+    # Set the new User-Agent
+    driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": user_agent}) 
     
     url = f'https://www.walmart.com/search/?query={product_name}'
     driver.get(url)
@@ -146,13 +146,15 @@ def search_walmart(driver, product_name):
         return ('Walmart', None, None, None)
 
 def search_newegg(driver, product_name):
-
+    
     url = f'https://www.newegg.com/p/pl?d={product_name}'
     driver.get(url)
-    
+
+    delay = random.uniform(2, 5)  # Random delay between 2 and 5 seconds
+    time.sleep(delay)
     
     click_us_link(driver,url,"Newegg")
-    
+
     try:
         product_element = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, '.item-title'))
