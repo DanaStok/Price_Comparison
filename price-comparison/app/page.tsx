@@ -19,8 +19,8 @@ function Search() {
       const data = await response.json();
       console.log('Received data:', data);
       const results: SearchResult[] = [
-        { company: 'BestBuy', productName: data.BestBuy?.Item ?? '', price: data.BestBuy?.Price?.toString() ?? '', url: data.BestBuy?.URL ?? '' },
         { company: 'Newegg', productName: data.Newegg?.Item ?? '', price: data.Newegg?.Price?.toString() ?? '', url: data.Newegg?.URL ?? '' },
+        { company: 'BestBuy', productName: data.BestBuy?.Item ?? '', price: data.BestBuy?.Price?.toString() ?? '', url: data.BestBuy?.URL ?? '' },
         { company: 'Walmart', productName: data.Walmart?.Item ?? '', price: data.Walmart?.Price?.toString() ?? '', url: data.Walmart?.URL ?? '' }
       ];
       setSearchResults(results);

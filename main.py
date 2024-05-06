@@ -11,6 +11,7 @@ import re, random, time
 from fake_useragent import UserAgent
 
 
+
 app = FastAPI()
 
 app.add_middleware(
@@ -25,8 +26,14 @@ def setup_driver():
     PATH = "./chromedriver"
     service = Service(executable_path=PATH)
     options = Options()
-    options.headless = True
     
+    #Add option to run in headless mode
+    options.add_argument("--headless")
+    options.add_argument("window-size=1920,1080")
+    options.add_argument("--disable-gpu")
+    #Add user agent
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
+
     # Add options to simulate human-like behavior
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -51,16 +58,16 @@ async def search_all_sites(product_name: str):
     driver = setup_driver()
     try:
         results = [
-            search_bestbuy(driver, product_name),
             search_newegg(driver, product_name),
+            search_bestbuy(driver, product_name),
             search_walmart(driver, product_name)
         ]
     finally:
         driver.quit()
     
     return {
-        "BestBuy": {"Item": results[0][1], "Price": results[0][2], "URL": results[0][3]},
-        "Newegg": {"Item": results[1][1], "Price": results[1][2], "URL": results[1][3]},
+        "Newegg": {"Item": results[0][1], "Price": results[0][2], "URL": results[0][3]},
+        "BestBuy": {"Item": results[1][1], "Price": results[1][2], "URL": results[1][3]},
         "Walmart": {"Item": results[2][1], "Price": results[2][2], "URL": results[2][3]}
     }
     
@@ -76,9 +83,9 @@ def click_us_link(driver, url, website):
         # Wait for the element to be clickable or visible and then click it
         us_link = WebDriverWait(driver, 10).until(condition)
         us_link.click()
-        print("Clicked on the United States link successfully!")
+        
     except Exception as e:
-        print(f"The United States link was not clickable or not found within the timeout period: {str(e)}")
+        print(f"Error: {str(e)}")
  
 def clean_price(price_str):
     # Remove any non-digit, period, or comma characters
@@ -108,15 +115,13 @@ def search_bestbuy(driver, product_name):
         price = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, '.pricing-price  div[data-testid="large-price"] .priceView-customer-price > span:nth-child(1)'))
         ).text
-        print(f"BestBuy URL: {product_url}")
-        print(f"BestBuy product: {product}")
-        print(f"Bestbuy Price: {price}")
         return ('Bestbuy', product, clean_price(price), product_url)
-    except:
+    
+    except Exception as e:
+        print(f"Error: {str(e)}")
         return ('Bestbuy', None, None, None)
 
 def search_walmart(driver, product_name):   
-    
     ua = UserAgent()
     user_agent = ua.random  # Randomize the User-Agent
     # Set the new User-Agent
@@ -138,22 +143,18 @@ def search_walmart(driver, product_name):
         price = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-automation-id="product-price"] div[aria-hidden="true"]'))
         ).text
-        print(f"Walmart URL: {product_url}")
-        print(f"Walmart Price: {price}")
-        print(f"Walmart product: {product}")
+        
         return ('Walmart', product, clean_price(price), product_url)
-    except:
+    
+    except Exception as e:
+        print(f"Error: {str(e)}")
         return ('Walmart', None, None, None)
 
 def search_newegg(driver, product_name):
-    
     url = f'https://www.newegg.com/p/pl?d={product_name}'
     driver.get(url)
 
-    delay = random.uniform(2, 5)  # Random delay between 2 and 5 seconds
-    time.sleep(delay)
-    
-    click_us_link(driver,url,"Newegg")
+    click_us_link(driver, url, "Newegg")  # Ensure this function is correctly implemented
 
     try:
         product_element = WebDriverWait(driver, 10).until(
@@ -161,15 +162,17 @@ def search_newegg(driver, product_name):
         )
         product = product_element.text
         product_url = product_element.get_attribute('href')
-        price = WebDriverWait(driver, 10).until(
+        price_element = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, '.price-current'))
-        ).text
-        print(f"Newegg URL: {product_url}")
-        print(f"Newegg product: {product}")
-        print(f"NewEgg Price: {price}")
+        )
+        price = price_element.text.strip().split()[0]  # Assuming the price is followed by currency or other text
+
         return ('Newegg', product, clean_price(price), product_url)
-    except:
+    
+    except Exception as e:
+        print(f"Error: {str(e)}")
         return ('Newegg', None, None, None)
+
 
 if __name__ == "__main__":
     import uvicorn
